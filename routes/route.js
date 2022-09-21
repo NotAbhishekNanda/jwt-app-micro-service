@@ -22,10 +22,10 @@ router.post("/login", (req, res) => {
        }
 
        const accessToken = jwt.sign({ username: username }, "a1b2c3d1e2f3", {
-        expiresIn: "20m",
+        expiresIn: "1m",
         });
        const refreshToken = jwt.sign({ username: username }, "refreshSecret", {
-        expiresIn: "30m",
+        expiresIn: "1m",
         });
         //Ps. The expiresIn time is just for testing purpose you can    change it later accordingly.
        return res.status(200).json({ accessToken,refreshToken });
