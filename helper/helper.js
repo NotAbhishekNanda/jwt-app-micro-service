@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 function isAuthenticated(req, res, next) {
   try {
     let token = req.get('authorization');
-
+    console.log('isExpired is:', isJwtExpired(token));
+    
     if (!token) {
       return res.status(404).json({ success: false, msg: 'Token not found' });
     }
@@ -13,20 +14,37 @@ function isAuthenticated(req, res, next) {
     req.password = decoded.password;
     next();
   } catch (error) {
-    return res.status(401).json({ success: false, msg: error.message });
+    // return res.status(401).json({ success: false, msg: error.message });
+    if(error.message === "jwt expired"){
+      const { username, refreshToken } = req.body;
+      const isValid = verifyRefresh(username, refreshToken);
+      if (!isValid) {
+        console.log("Inside isvalid");
+        return res
+          .status(401)
+          .json({ success: false, error: 'Invalid token,try login again' });
+      }
+      const accessToken = jwt.sign({ username: username }, 'a1b2c3d1e2f3', {
+        expiresIn: '1m',
+      });
+      res.set('access_token', accessToken);
+      next();
+    }
+    else{
+      return res.status(401).json({ success: false, msg: error.message });
+    }
     // console.error(error);
   }
 }
 
 function verifyRefresh(username, token) {
-    try {
-     const decoded = jwt.verify(token, "refreshSecret");
-     return decoded.username === username;
-    } catch (error) {
-     // console.error(error);
-     return false;
-    }
-   }
+  try {
+    const decoded = jwt.verify(token, 'refreshSecret');
+    return decoded.username === username;
+  } catch (error) {
+    // console.error(error);
+    return false;
+  }
+}
 
 module.exports = { isAuthenticated, verifyRefresh };
-
